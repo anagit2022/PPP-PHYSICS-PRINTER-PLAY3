@@ -142,8 +142,8 @@ body {
 }
 
 .page-heading {
-    color: #000;
-    font-size: 28px;
+    color: #3ba9e0;
+    font-size: 32px;
     font-weight: 700;
     padding: 40px 40px 10px 40px;
     margin: 0;
@@ -554,6 +554,34 @@ body {
     padding: 6px 8px;
     font-family: inherit;
     font-size: 14px;
+}
+
+.saved-experiment-display {
+    margin-top: 4px;
+}
+
+.saved-experiment-name {
+    display: inline-block;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 4px 2px;
+    border-bottom: 1px dashed #999;
+    cursor: pointer;
+}
+
+.saved-experiment-name:hover {
+    border-bottom-color: var(--accent-color);
+}
+
+.rename-input {
+    font-size: 17px;
+    font-weight: 700;
+    font-family: inherit;
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .code-box {
