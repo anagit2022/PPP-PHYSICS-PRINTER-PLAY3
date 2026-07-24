@@ -4,8 +4,8 @@
 // DriveUpload.gs. This file is sent to the browser as plain text, so
 // anyone who opens dev tools can read these values — fine for a
 // personal tool, just don't publish this page anywhere public.
-const DRIVE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyub-PfUEkUo_pTjvd42kTfrMJmhei7hLwPUIwa8lr_m9CsUy_GEqKEXfkFXQ9ou8Hq/exec";
-const DRIVE_SECRET = "PPP"; // must match SECRET in DriveUpload.gs
+const DRIVE_SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE"; // e.g. https://script.google.com/macros/s/AKfycb.../exec
+const DRIVE_SECRET = "changeme123"; // must match SECRET in DriveUpload.gs
 
 let port;
 let writer;
@@ -252,6 +252,8 @@ if(experimentId && !loadedExperiment && driveConfigured()){
                 if(motionInputEl) motionInputEl.value = remote.motion;
                 if(setupInputEl) setupInputEl.value = remote.setup;
                 if(templateLabelEl) templateLabelEl.textContent = `Saved experiment: ${remote.name}`;
+                currentExperimentId = remote.id;
+                if(typeof showSavedState === "function") showSavedState(remote.name);
                 renderAllSliders();
                 updateMotionPreview();
             }else if(templateLabelEl){
@@ -513,10 +515,35 @@ async function syncExperimentToDrive(experiment){
 }
 
 const saveExperimentBtn = document.getElementById("saveExperimentBtn");
-if(saveExperimentBtn){
+const experimentNameInput = document.getElementById("experimentNameInput");
+const savedExperimentDisplay = document.getElementById("savedExperimentDisplay");
+const savedExperimentNameEl = document.getElementById("savedExperimentName");
+const saveExperimentStatus = document.getElementById("saveExperimentStatus");
+
+let currentExperimentId = loadedExperiment ? loadedExperiment.id : null;
+
+function showSavedState(name){
+    experimentNameInput.style.display = "none";
+    saveExperimentBtn.style.display = "none";
+    savedExperimentDisplay.style.display = "block";
+    savedExperimentNameEl.textContent = name;
+}
+
+function showUnsavedState(){
+    experimentNameInput.style.display = "block";
+    saveExperimentBtn.style.display = "inline-block";
+    savedExperimentDisplay.style.display = "none";
+}
+
+if(saveExperimentBtn && experimentNameInput){
+    if(currentExperimentId){
+        showSavedState(loadedExperiment.name);
+    }else{
+        showUnsavedState();
+    }
+
     saveExperimentBtn.addEventListener("click", async () => {
-        const nameInput = document.getElementById("experimentNameInput");
-        const name = nameInput.value.trim();
+        const name = experimentNameInput.value.trim();
         if(!name){
             alert("Give this experiment a name first.");
             return;
@@ -535,22 +562,80 @@ if(saveExperimentBtn){
         const list = getSavedExperiments();
         list.push(experiment);
         setSavedExperiments(list);
-
-        const status = document.getElementById("saveExperimentStatus");
+        currentExperimentId = experiment.id;
 
         if(driveConfigured()){
-            if(status) status.textContent = "Saving to Google Drive...";
+            if(saveExperimentStatus) saveExperimentStatus.textContent = "Saving to Google Drive...";
             try{
                 const driveList = await syncExperimentToDrive(experiment);
                 setSavedExperiments(driveList); // Drive's copy is now the source of truth
-                if(status) status.textContent = `Saved "${name}" to Google Drive — visible on any device now.`;
+                if(saveExperimentStatus) saveExperimentStatus.textContent = `Saved "${name}" to Google Drive — visible on any device now.`;
             }catch(err){
-                if(status) status.textContent = `Saved locally, but Drive sync failed: ${err.message}`;
+                if(saveExperimentStatus) saveExperimentStatus.textContent = `Saved locally, but Drive sync failed: ${err.message}`;
             }
         }else{
-            if(status) status.textContent = `Saved "${name}" locally (this browser only). Set DRIVE_SCRIPT_URL in sketch.js to sync across devices.`;
+            if(saveExperimentStatus) saveExperimentStatus.textContent = `Saved "${name}" locally (this browser only). Set DRIVE_SCRIPT_URL in sketch.js to sync across devices.`;
         }
 
-        nameInput.value = "";
+        showSavedState(name);
     });
+
+    // ---- double-click the saved name to rename it in place ----
+    savedExperimentNameEl.addEventListener("dblclick", () => {
+        const currentName = savedExperimentNameEl.textContent;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "rename-input";
+        input.value = currentName;
+
+        savedExperimentNameEl.replaceWith(input);
+        input.focus();
+        input.select();
+
+        function commitRename(){
+            const newName = input.value.trim() || currentName;
+            input.replaceWith(savedExperimentNameEl);
+            savedExperimentNameEl.textContent = newName;
+            renameCurrentExperiment(newName);
+        }
+
+        function cancelRename(){
+            input.replaceWith(savedExperimentNameEl);
+        }
+
+        input.addEventListener("blur", commitRename);
+        input.addEventListener("keydown", (e) => {
+            if(e.key === "Enter") input.blur();
+            if(e.key === "Escape"){
+                input.removeEventListener("blur", commitRename);
+                cancelRename();
+            }
+        });
+    });
+}
+
+async function renameCurrentExperiment(newName){
+    if(!currentExperimentId) return;
+
+    const list = getSavedExperiments();
+    const entry = list.find(e => e.id === currentExperimentId);
+    if(!entry) return;
+
+    entry.name = newName;
+    setSavedExperiments(list);
+
+    if(saveExperimentStatus) saveExperimentStatus.textContent = "Renaming...";
+
+    if(driveConfigured()){
+        try{
+            const driveList = await syncExperimentToDrive(entry);
+            setSavedExperiments(driveList);
+            if(saveExperimentStatus) saveExperimentStatus.textContent = `Renamed to "${newName}" and synced to Drive.`;
+        }catch(err){
+            if(saveExperimentStatus) saveExperimentStatus.textContent = `Renamed locally, but Drive sync failed: ${err.message}`;
+        }
+    }else{
+        if(saveExperimentStatus) saveExperimentStatus.textContent = `Renamed to "${newName}" locally.`;
+    }
 }
