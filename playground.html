@@ -38,6 +38,17 @@
         <div class="col left-col">
 
             <div class="panel">
+                <h2>Save experiment</h2>
+                <input type="text" id="experimentNameInput" class="case-input" placeholder="Name this experiment (e.g. Bridge sway test)">
+                <button type="button" id="saveExperimentBtn" class="outline-btn" style="margin-top:12px;">Save experiment</button>
+                <div class="saved-experiment-display" id="savedExperimentDisplay" style="display:none;">
+                    <span class="saved-experiment-name" id="savedExperimentName" title="Double-click to rename"></span>
+                    <div class="hint">Double-click the name to rename it</div>
+                </div>
+                <div id="saveExperimentStatus" class="hint"></div>
+            </div>
+
+            <div class="panel">
                 <h2>Connect printer</h2>
                 <button id="connectButton" class="outline-btn">Connect</button>
                 <div id="connectStatus" class="status">Not connected</div>
@@ -66,13 +77,6 @@ G0 Y-{Y} F{F}</textarea>
                 <div class="hint">Edit freely. Placeholders match whatever token each slider is set to (e.g. <code>{Y}</code>, <code>{F}</code>) — filled in live from the sliders every cycle. You can also offset a value, e.g. <code>{Y+10}</code> or <code>{F-500}</code>.</div>
                 <div id="motionPreview" class="code-box motion-preview"></div>
                 <div class="hint">Preview: what's actually sent right now</div>
-            </div>
-
-            <div class="panel">
-                <h2>Save experiment</h2>
-                <input type="text" id="experimentNameInput" class="case-input" placeholder="Name this experiment (e.g. Bridge sway test)">
-                <button type="button" id="saveExperimentBtn" class="outline-btn" style="margin-top:12px;">Save experiment</button>
-                <div id="saveExperimentStatus" class="hint"></div>
             </div>
 
         </div>
@@ -113,7 +117,7 @@ G0 Y-{Y} F{F}</textarea>
     </div>
 
     <script src="theme.js"></script>
-    <script src="sketch.js?v=16"></script>
+    <script src="sketch.js?v=17"></script>
     <script src="observation.js?v=14"></script>
 </body>
 </html>
